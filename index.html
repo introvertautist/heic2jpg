@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>HEIF - High Efficiency Image File Format</title>
+
+        <script src="js/libde265-selector.js"></script>
+        <script src="js/heif-api.js"></script>
+        <script src="js/heif-extension.js"></script>
+        <script src="js/hevc-decoder.js"></script>
+        <script src="js/image-provider.js"></script>
+        <script src="js/footer.js"></script>
+    </head>
+    <body>
+        <script>        
+            var reader = new HEIFReader('2.heic');
+            var decoder = new HevcDecoder();
+            var imgData = new ImageProvider(reader, decoder);
+
+            reader.requestFileInfo(function(payload) {
+                if(payload.success !== true) {
+                    console.error("Could not read file:", url);
+                } else {
+                    var fileInfo = payload;
+                    console.log("FileInfo contents:", fileInfo);
+                    
+                    if (fileInfo.rootLevelMetaBoxProperties) {
+                        var masterContextId = fileInfo.rootLevelMetaBoxProperties.contextId;
+                        var masterItemIds = [];
+                        var imageFeaturesMap = fileInfo.rootLevelMetaBoxProperties.imageFeaturesMap;
+                        
+                        for (i in imageFeaturesMap) {
+                            if (imageFeaturesMap.hasOwnProperty(i) && imageFeaturesMap[i].isMasterImage === true) {
+                                masterItemIds.push(parseInt(i));
+                            }
+                        }
+                        console.log("Master images in the file:", masterItemIds);
+                        
+                        imgData.requestImageData(masterContextId, masterItemIds, function (data) { console.log(data); });
+                        //imgData.requestImageData(masterContextId, masterItemIds, alert('Ok'));
+                        
+                    }
+
+                }
+            });
+        </script>
+
+        <div id="canv"></div>
+    </body>
+</html>
